@@ -84,9 +84,9 @@ With GPipe set up, you can now train your model using your custom dataset. This 
 
 After training both the non-parallelized and parallelized versions of your model, compare their performance. This can include metrics such as accuracy, loss, and training time.
 
-Additional Considerations
-<b>Microbatches:</b> GPipe splits the input data into smaller microbatches to keep multiple GPUs busy at any given time. This is crucial for achieving efficient parallelism, especially on models that do not fit into a single GPU's memory 5.
-<b>Performance Profiling:</b> The partitioning of an arbitrary model among GPUs to balance computation and minimize communication requires performance profiling. This is particularly relevant for models like Transformers, which consist of blocks with the same operations and dimensions 5.
+Additional Considerations<br>
+<b>Microbatches:</b> GPipe splits the input data into smaller microbatches to keep multiple GPUs busy at any given time. This is crucial for achieving efficient parallelism, especially on models that do not fit into a single GPU's memory 5.<br>
+<b>Performance Profiling:</b> The partitioning of an arbitrary model among GPUs to balance computation and minimize communication requires performance profiling. This is particularly relevant for models like Transformers, which consist of blocks with the same operations and dimensions 5.<br>
 By following these steps, you can implement GPipe for parallelism in your project, leveraging the power of multiple GPUs to train your ResNet-50 model more efficiently.
 
 
