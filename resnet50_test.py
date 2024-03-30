@@ -6,11 +6,11 @@ import numpy as np
 
 
 IMAGE_SIZE = 224
-trainImagesFolder = "D:/archive/alien_vs_predator_thumbnails/data/train"
+trainImagesFolder = "./alien_vs_predator_thumbnails/data/train"
 CLASSES = os.listdir(trainImagesFolder)
 num_classes = len(CLASSES)
 
-best_model_file = "D:/temp/best_model.keras"
+best_model_file = "./temp/best_model.keras"
 model = tf.keras.models.load_model(best_model_file)
 
 def prepare_image(file):
@@ -20,8 +20,8 @@ def prepare_image(file):
     img_result = img_array / 255.0
     return img_result
 
-testImage1 = "D:/archive/alien_vs_predator_thumbnails/data/validation/alien/16.jpg"
-testImage2 = "D:/archive/alien_vs_predator_thumbnails/data/validation/predator/10.jpg"
+testImage1 = "./alien_vs_predator_thumbnails/data/validation/alien/16.jpg"
+testImage2 = "./alien_vs_predator_thumbnails/data/validation/420.jpeg"
 
 img1 = cv.imread(testImage1)
 img2 = cv.imread(testImage2)

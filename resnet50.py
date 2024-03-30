@@ -6,13 +6,14 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import numpy as np
 from glob import glob
 import matplotlib.pyplot as plt
+import time
 
 # Dataset used - https://www.kaggle.com/datasets/pmigdal/alien-vs-predator-images
 
 IMAGE_SIZE = [224, 224]
 
-trainMyImagesFolder = "D:/archive/alien_vs_predator_thumbnails/data/train"
-testMyImagesFolder = "D:/archive/alien_vs_predator_thumbnails/data/validation"
+trainMyImagesFolder = "./alien_vs_predator_thumbnails/data/train"
+testMyImagesFolder = "./alien_vs_predator_thumbnails/data/validation"
 
 
 myResNet = ResNet50(input_shape=IMAGE_SIZE + [3], weights="imagenet", include_top=False)
@@ -59,8 +60,8 @@ test_set = test_datagen.flow_from_directory(
     testMyImagesFolder, target_size=(224, 224), batch_size=32, class_mode="categorical"
 )
 
-EPOCHS = 200
-best_model_file = "D:/temp/best_model.keras"
+EPOCHS = 50
+best_model_file = "./temp/best_model.keras"
 
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 
@@ -72,6 +73,8 @@ callbacks = [
     EarlyStopping(monitor="val_accuracy", patience=30, verbose=1),
 ]
 
+start_time = time.time()
+
 r = model.fit(
     training_set,
     validation_data=test_set,
@@ -81,16 +84,29 @@ r = model.fit(
     callbacks=callbacks,
 )
 
+end_time = time.time()
+elapsed_time = end_time - start_time
+hours, rem = divmod(elapsed_time, 3600)
+minutes, seconds = divmod(rem, 60)
+
 
 best_val_acc = max(r.history["val_accuracy"])
 print("Best validation accuracy: ", best_val_acc)
 
-plt.plot(r.history["accuracy"], label="train acc")
-plt.plot(r.history["val_accuracy"], label="val acc")
-plt.legend()
-plt.show()
+# plt.plot(r.history["accuracy"], label="train acc")
+# plt.plot(r.history["val_accuracy"], label="val acc")
+# plt.legend()
+# plt.show()
 
 plt.plot(r.history["loss"], label="train loss")
 plt.plot(r.history["val_loss"], label="val loss")
 plt.legend()
 plt.show()
+
+plt.figure(figsize=(10, 5))
+plt.plot(r.history["accuracy"], label="train acc")
+plt.plot(r.history["val_accuracy"], label="val acc")
+plt.text(0.5, 0.5, f"Training time: {int(hours)}:{int(minutes)}:{int(seconds)}", horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes)
+plt.legend()
+plt.show()
+
