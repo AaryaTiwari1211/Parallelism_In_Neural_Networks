@@ -31,8 +31,8 @@ train_dataset = datasets.ImageFolder(train_data_path, transform=transform)
 test_dataset = datasets.ImageFolder(test_data_path, transform=transform)
 
 # Create data loaders
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+train_loader = DataLoader(train_dataset, batch_size=256, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=256, shuffle=False)
 
 # Load pre-trained ResNet50 model
 myResNet = models.resnet50(pretrained=True)
@@ -72,11 +72,34 @@ test_losses = []
 train_accuracies = []
 test_accuracies = []
 
+accumulation_steps = 2
+
 for epoch in range(max_epochs):
     myResNet.train()
     running_loss = 0.0
     correct = 0
     total = 0
+    
+    # Gradient accumulation loop 
+    
+    # for i, (images, labels) in enumerate(train_loader):
+    #     images, labels = images.to(device), labels.to(device)
+        
+    #     optimizer.zero_grad()
+        
+    #     outputs = myResNet(images)
+    #     loss = criterion(outputs, labels)
+    #     loss = loss / accumulation_steps # Normalize our loss (if averaged)
+    #     loss.backward()
+        
+    #     if (i+1) % accumulation_steps == 0: # Wait for several backward steps
+    #         optimizer.step() # Now we can do an optimizer step
+    #         optimizer.zero_grad() # Reset gradients tensors
+        
+    #     running_loss += loss.item()
+    #     _, predicted = outputs.max(1)
+    #     total += labels.size(0)
+    #     correct += predicted.eq(labels).sum().item()
     
     for images, labels in train_loader:
         images, labels = images.to(device), labels.to(device)
@@ -129,7 +152,7 @@ minutes, seconds = divmod(rem, 60)
 print(f"Training time: {int(hours)}:{int(minutes)}:{int(seconds)}")
 
 # Save the model's state dictionary
-torch.save(myResNet.state_dict(), 'temp/model_state.pth')
+torch.save(myResNet.state_dict(), 'temp/model_state_gpipe_large_batch.pth')
 
 # Plotting
 plt.figure(figsize=(10, 5))
