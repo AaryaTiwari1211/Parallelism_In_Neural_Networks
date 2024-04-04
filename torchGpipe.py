@@ -8,6 +8,8 @@ import time
 import os
 from torchgpipe import GPipe
 from torchgpipe.balance import balance_by_time
+from torch.cuda.amp import autocast, GradScaler
+
 
 # Define epochs
 max_epochs = 50
@@ -74,42 +76,108 @@ test_accuracies = []
 
 accumulation_steps = 2
 
+# for epoch in range(max_epochs):
+#     myResNet.train()
+#     running_loss = 0.0
+#     correct = 0
+#     total = 0
+    
+#     # Gradient accumulation loop 
+    
+#     # for i, (images, labels) in enumerate(train_loader):
+#     #     images, labels = images.to(device), labels.to(device)
+        
+#     #     optimizer.zero_grad()
+        
+#     #     outputs = myResNet(images)
+#     #     loss = criterion(outputs, labels)
+#     #     loss = loss / accumulation_steps # Normalize our loss (if averaged)
+#     #     loss.backward()
+        
+#     #     if (i+1) % accumulation_steps == 0: # Wait for several backward steps
+#     #         optimizer.step() # Now we can do an optimizer step
+#     #         optimizer.zero_grad() # Reset gradients tensors
+        
+#     #     running_loss += loss.item()
+#     #     _, predicted = outputs.max(1)
+#     #     total += labels.size(0)
+#     #     correct += predicted.eq(labels).sum().item()
+    
+#     for images, labels in train_loader:
+#         images, labels = images.to(device), labels.to(device)
+        
+#         optimizer.zero_grad()
+        
+#         outputs = myResNet(images)
+#         loss = criterion(outputs, labels)
+#         loss.backward()
+#         optimizer.step()
+        
+#         running_loss += loss.item()
+#         _, predicted = outputs.max(1)
+#         total += labels.size(0)
+#         correct += predicted.eq(labels).sum().item()
+    
+#     train_loss = running_loss / len(train_loader)
+#     train_accuracy = 100. * correct / total
+#     train_losses.append(train_loss)
+#     train_accuracies.append(train_accuracy)
+    
+#     # Evaluation on the test set
+#     myResNet.eval()
+#     test_loss = 0.0
+#     correct = 0
+#     total = 0
+    
+#     with torch.no_grad():
+#         for images, labels in test_loader:
+#             images, labels = images.to(device), labels.to(device)
+#             outputs = myResNet(images)
+#             loss = criterion(outputs, labels)
+            
+#             test_loss += loss.item()
+#             _, predicted = outputs.max(1)
+#             total += labels.size(0)
+#             correct += predicted.eq(labels).sum().item()
+    
+#     test_loss /= len(test_loader)
+#     test_accuracy = 100. * correct / total
+#     test_losses.append(test_loss)
+#     test_accuracies.append(test_accuracy)
+    
+#     print(f"Epoch [{epoch+1}/{max_epochs}], Train Loss: {train_loss:.4f}, Train Accuracy: {train_accuracy:.2f}%, Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.2f}%")
+
+
+#Using mixed precision training with GPipe for faster training
+
+scaler = GradScaler()
+
 for epoch in range(max_epochs):
     myResNet.train()
     running_loss = 0.0
     correct = 0
     total = 0
     
-    # Gradient accumulation loop 
-    
-    # for i, (images, labels) in enumerate(train_loader):
-    #     images, labels = images.to(device), labels.to(device)
-        
-    #     optimizer.zero_grad()
-        
-    #     outputs = myResNet(images)
-    #     loss = criterion(outputs, labels)
-    #     loss = loss / accumulation_steps # Normalize our loss (if averaged)
-    #     loss.backward()
-        
-    #     if (i+1) % accumulation_steps == 0: # Wait for several backward steps
-    #         optimizer.step() # Now we can do an optimizer step
-    #         optimizer.zero_grad() # Reset gradients tensors
-        
-    #     running_loss += loss.item()
-    #     _, predicted = outputs.max(1)
-    #     total += labels.size(0)
-    #     correct += predicted.eq(labels).sum().item()
-    
     for images, labels in train_loader:
         images, labels = images.to(device), labels.to(device)
         
         optimizer.zero_grad()
         
-        outputs = myResNet(images)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
+        # Casts operations to mixed precision
+        with autocast():
+            outputs = myResNet(images)
+            loss = criterion(outputs, labels)
+        
+        # Scales loss, and calls backward() to create scaled gradients
+        scaler.scale(loss).backward()
+        
+        # Unscales gradients and calls optimizer.step()
+        scaler.step(optimizer)
+        
+        # Updates the scale for next iteration
+        scaler.update()
+        
+        optimizer.zero_grad()
         
         running_loss += loss.item()
         _, predicted = outputs.max(1)
@@ -130,8 +198,10 @@ for epoch in range(max_epochs):
     with torch.no_grad():
         for images, labels in test_loader:
             images, labels = images.to(device), labels.to(device)
-            outputs = myResNet(images)
-            loss = criterion(outputs, labels)
+            
+            with autocast():
+                outputs = myResNet(images)
+                loss = criterion(outputs, labels)
             
             test_loss += loss.item()
             _, predicted = outputs.max(1)
@@ -144,6 +214,7 @@ for epoch in range(max_epochs):
     test_accuracies.append(test_accuracy)
     
     print(f"Epoch [{epoch+1}/{max_epochs}], Train Loss: {train_loss:.4f}, Train Accuracy: {train_accuracy:.2f}%, Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.2f}%")
+
 
 end_time = time.time()
 elapsed_time = end_time - start_time
