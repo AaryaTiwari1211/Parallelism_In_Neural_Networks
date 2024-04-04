@@ -7,6 +7,9 @@ import matplotlib.pyplot as plt
 import time
 import os
 
+#define epochs
+max_epochs = 50
+
 # Define device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -59,7 +62,7 @@ test_losses = []
 train_accuracies = []
 test_accuracies = []
 
-for epoch in range(50):
+for epoch in range(max_epochs):
     myResNet.train()
     running_loss = 0.0
     correct = 0
@@ -107,13 +110,16 @@ for epoch in range(50):
     test_losses.append(test_loss)
     test_accuracies.append(test_accuracy)
     
-    print(f"Epoch [{epoch+1}/12], Train Loss: {train_loss:.4f}, Train Accuracy: {train_accuracy:.2f}%, Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.2f}%")
+    print(f"Epoch [{epoch+1}/{max_epochs}], Train Loss: {train_loss:.4f}, Train Accuracy: {train_accuracy:.2f}%, Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.2f}%")
 
 end_time = time.time()
 elapsed_time = end_time - start_time
 hours, rem = divmod(elapsed_time, 3600)
 minutes, seconds = divmod(rem, 60)
 print(f"Training time: {int(hours)}:{int(minutes)}:{int(seconds)}")
+
+# Save the model's state dictionary
+torch.save(myResNet.state_dict(), 'temp/model_state.pth')
 
 # Plotting
 plt.figure(figsize=(10, 5))
@@ -126,9 +132,8 @@ plt.legend()
 
 # Add elapsed time to the graph
 elapsed_time_str = f"Total training time: {int(hours)}:{int(minutes)}:{int(seconds)}"
-plt.annotate(elapsed_time_str, xy=(1, 0), xycoords='axes fraction', fontsize=12,
-             xytext=(-5, 5), textcoords='offset points',
-             ha='right', va='bottom')
+plt.annotate(elapsed_time_str, xy=(0.5, 0.5), xycoords='axes fraction', fontsize=12,
+             ha='center', va='center')
 
 plt.show()
 
@@ -141,8 +146,7 @@ plt.title("Training and Test Accuracy")
 plt.legend()
 
 # Add elapsed time to the graph
-plt.annotate(elapsed_time_str, xy=(1, 0), xycoords='axes fraction', fontsize=12,
-             xytext=(-5, 5), textcoords='offset points',
-             ha='right', va='bottom')
+plt.annotate(elapsed_time_str, xy=(0.5, 0.5), xycoords='axes fraction', fontsize=12,
+             ha='center', va='center')
 
 plt.show()
