@@ -6,8 +6,10 @@ from torchvision import models, transforms, datasets
 import matplotlib.pyplot as plt
 import time
 import os
+from torchgpipe import GPipe
+from torchgpipe.balance import balance_by_time
 
-#define epochs
+# Define epochs
 max_epochs = 50
 
 # Define device
@@ -50,9 +52,17 @@ for param in myResNet.fc.parameters():
 # Move model to device
 myResNet = myResNet.to(device)
 
-# Loss function and optimizer
+# Wrap the model within nn.Sequential
+myResNet = nn.Sequential(myResNet)
+
+# Wrap the model with GPipe
+myResNet = GPipe(myResNet, balance=[1], devices=[0, 1, 2, 3], chunks=8)
+
+# Loss function
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(myResNet.parameters(), lr=0.01)
+
+# Optimizer (note: GPipe works best with AdamW optimizer)
+optimizer = optim.AdamW(myResNet.parameters(), lr=0.01)
 
 # Training loop
 start_time = time.time()
