@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as F
 from torchvision import transforms, models, datasets
 import torch.nn as nn
+from torchgpipe import GPipe
 
 # Define image transformations
 transform = transforms.Compose([
@@ -15,7 +16,7 @@ transform = transforms.Compose([
 ])
 
 # Load the saved model state dictionary
-model_state_dict = torch.load("./temp/model_state_regular.pth")
+model_state_dict = torch.load("./temp/model_state_gpipe.pth")
 
 train_data_path = "./alien_vs_predator_thumbnails/data/train"
 train_dataset = datasets.ImageFolder(train_data_path, transform=transform)
@@ -26,6 +27,12 @@ model = models.resnet50(pretrained=True)  # Assuming you used ResNet50 architect
 num_features = model.fc.in_features
 model.fc = nn.Linear(num_features, len(train_dataset.classes))
 
+#wrap the model within nn.Sequential
+model = nn.Sequential(model)
+
+# Wrap the model with GPipe
+partitions = torch.cuda.device_count()  # Assuming you're using GPU
+model = GPipe(model, balance=[1]*partitions, devices=list(range(partitions)), chunks=8)
 
 # Load the model state dictionary
 model.load_state_dict(model_state_dict)
@@ -43,12 +50,12 @@ def prepare_image(file):
     return img
 
 # Test images
-test_image1 = "./alien_vs_predator_thumbnails/data/validation/alien/16.jpg"
+test_image1 = "./alien_vs_predator_thumbnails/data/validation/alien/75.jpg"
 test_image2 = "./alien_vs_predator_thumbnails/data/validation/predator/10.jpg"
 
 # Prepare images for prediction
-img1 = prepare_image(test_image1)
-img2 = prepare_image(test_image2)
+img1 = prepare_image(test_image1).to('cuda')
+img2 = prepare_image(test_image2).to('cuda')
 
 # Perform prediction
 with torch.no_grad():
